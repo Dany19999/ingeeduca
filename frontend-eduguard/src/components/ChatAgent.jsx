@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { API_URL } from "../config/api.js";
 import {
   Send,
   Copy,
@@ -371,7 +372,7 @@ Cualquier duda puntual sobre un artículo de la norma, dime y lo analizamos junt
 
     // Intento 1: Backend FastAPI con streaming SSE en tiempo real
     try {
-      const response = await fetch("http://localhost:8000/api/agente/chat/stream", {
+      const response = await fetch(`${API_URL}/api/agente/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

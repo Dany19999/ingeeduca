@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { API_URL, getWsAulaUrl, getWsAlertasUrl } from "../config/api.js";
 import {
   Users,
   AlertTriangle,
@@ -99,7 +100,7 @@ export default function DashboardDocente({
   const cargarMatrizEstudiantes = async () => {
     setCargandoMatriz(true);
     try {
-      const res = await fetch("http://localhost:8000/api/estudiantes/matriz");
+      const res = await fetch(`${API_URL}/api/estudiantes/matriz`);
       if (res.ok) {
         const data = await res.json();
         setMatrizEstudiantes(data);
@@ -132,7 +133,7 @@ export default function DashboardDocente({
     setCargandoReporte(true);
     try {
       const cid = typeof id === "string" ? id.replace("aula-", "") : id;
-      const res = await fetch(`http://localhost:8000/api/metricas/reporte/${cid}`);
+      const res = await fetch(`${API_URL}/api/metricas/reporte/${cid}`);
       if (res.ok) {
         const data = await res.json();
         setReporteData(data);
@@ -154,7 +155,7 @@ export default function DashboardDocente({
 
   const handleDescargarCSV = () => {
     const cid = typeof claseReporteId === "string" ? claseReporteId.replace("aula-", "") : (claseReporteId || 4);
-    window.open(`http://localhost:8000/api/metricas/reporte/${cid}/csv`, "_blank");
+    window.open(`${API_URL}/api/metricas/reporte/${cid}/csv`, "_blank");
   };
 
   const handleImprimirReporte = () => {
@@ -174,7 +175,7 @@ export default function DashboardDocente({
 
   const cargarAlertasIniciales = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/aulas/AULA-101/alertas");
+      const res = await fetch(`${API_URL}/api/aulas/AULA-101/alertas`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -192,8 +193,7 @@ export default function DashboardDocente({
 
     const iniciarWsAlertas = () => {
       try {
-        const host = window.location.hostname || "localhost";
-        const wsUrl = `ws://${host}:8000/ws/alertas/AULA-101`;
+        const wsUrl = getWsAlertasUrl("AULA-101");
         const ws = new WebSocket(wsUrl);
         wsAlertasRef.current = ws;
 
@@ -365,7 +365,7 @@ export default function DashboardDocente({
     }
 
     try {
-      await fetch("http://localhost:8000/api/aulas/AULA-101/intervencion", {
+      await fetch(`${API_URL}/api/aulas/AULA-101/intervencion`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -424,7 +424,7 @@ export default function DashboardDocente({
     } else {
       // Respaldo REST si el WebSocket se estuviera reconectando
       try {
-        const res = await fetch("http://localhost:8000/api/aulas/AULA-101/alertas", {
+        const res = await fetch(`${API_URL}/api/aulas/AULA-101/alertas`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -457,8 +457,7 @@ export default function DashboardDocente({
 
     const conectarWsAula = () => {
       try {
-        const host = window.location.hostname || "localhost";
-        const wsUrl = `ws://${host}:8000/ws/aula/AULA-101`;
+        const wsUrl = getWsAulaUrl("AULA-101");
         ws = new WebSocket(wsUrl);
         wsAulaDocenteRef.current = ws;
 
@@ -596,7 +595,7 @@ export default function DashboardDocente({
           }
 
           // 2. Respaldo HTTP REST en background
-          fetch("http://localhost:8000/api/salas/AULA-101/pantalla", {
+          fetch(`${API_URL}/api/salas/AULA-101/pantalla`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(framePayload)
@@ -894,7 +893,7 @@ export default function DashboardDocente({
     if (wsAulaDocenteRef.current && wsAulaDocenteRef.current.readyState === WebSocket.OPEN) {
       wsAulaDocenteRef.current.send(JSON.stringify({ tipo: "pantalla", pantalla: stopPayload }));
     }
-    fetch("http://localhost:8000/api/salas/AULA-101/pantalla", {
+    fetch(`${API_URL}/api/salas/AULA-101/pantalla`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(stopPayload)

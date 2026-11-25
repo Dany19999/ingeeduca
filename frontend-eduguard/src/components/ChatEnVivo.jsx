@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { API_URL } from "../config/api.js";
 import {
   Send,
   MessageSquare,
@@ -45,7 +46,7 @@ export default function ChatEnVivo({
     const cargarHistorial = async () => {
       try {
         const aid = String(aulaId).trim();
-        const res = await fetch(`http://localhost:8000/api/salas/${aid}/mensajes`);
+        const res = await fetch(`${API_URL}/api/salas/${aid}/mensajes`);
         if (res.ok) {
           const data = await res.json();
           if (activo && Array.isArray(data) && data.length > 0) {
@@ -142,7 +143,7 @@ export default function ChatEnVivo({
 
     // 3. Fallback / redundancia vía REST
     try {
-      fetch(`http://localhost:8000/api/salas/${aulaId}/mensajes`, {
+      fetch(`${API_URL}/api/salas/${aulaId}/mensajes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevoMsg)

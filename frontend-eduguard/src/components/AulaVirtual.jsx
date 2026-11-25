@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { API_URL, getWsAulaUrl, getWsAlertasUrl } from "../config/api.js";
 import * as _tf from "@tensorflow/tfjs";
 import * as tmImage from "@teachablemachine/image";
 import {
@@ -619,7 +620,7 @@ export default function AulaVirtual({
     const sincronizarPorHTTP = async () => {
       if (desmontado) return;
       try {
-        const resPresencia = await fetch(`http://localhost:8000/api/salas/${aulaId}/presencia`, {
+        const resPresencia = await fetch(`${API_URL}/api/salas/${aulaId}/presencia`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -676,9 +677,7 @@ export default function AulaVirtual({
     fallbackTimer = setInterval(sincronizarPorHTTP, 2500);
 
     try {
-      const protocoloWS = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const hostWS = window.location.hostname || "localhost";
-      const wsUrl = `${protocoloWS}//${hostWS}:8000/ws/aula/${aulaId}`;
+      const wsUrl = getWsAulaUrl(aulaId);
       ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -835,7 +834,7 @@ export default function AulaVirtual({
         ws.close();
       }
       if (userKey) {
-        fetch(`http://localhost:8000/api/salas/${aulaId}/presencia/${userKey}`, {
+        fetch(`${API_URL}/api/salas/${aulaId}/presencia/${userKey}`, {
           method: "DELETE"
         }).catch(() => {});
       }
@@ -1109,7 +1108,7 @@ export default function AulaVirtual({
   // Sincronizar y persistir métricas de atención y emoción en PostgreSQL vía POST /api/metricas/atencion
   const enviarMetricasBackend = useCallback(async (estado, atencion, _certeza = 1.0) => {
     try {
-      const apiUrl = import.meta.env?.VITE_API_URL || "http://localhost:8000";
+      const apiUrl = API_URL;
       const cid = typeof clase?.id === "number"
         ? clase.id
         : (clase?.id ? parseInt(String(clase.id).replace("aula-", "")) || null : null);
@@ -1172,7 +1171,7 @@ export default function AulaVirtual({
     }
 
     try {
-      const apiUrl = import.meta.env?.VITE_API_URL || "http://localhost:8000";
+      const apiUrl = API_URL;
       await fetch(`${apiUrl}/api/aulas/${roomTarget}/alertas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1205,8 +1204,7 @@ export default function AulaVirtual({
 
     const conectarAlertasEstudiante = () => {
       try {
-        const host = window.location.hostname || "localhost";
-        const wsUrl = `ws://${host}:8000/ws/alertas/${aulaId || "AULA-101"}`;
+        const wsUrl = getWsAlertasUrl(aulaId || "AULA-101");
         const wsA = new WebSocket(wsUrl);
         wsAlertasEstudianteRef.current = wsA;
 
@@ -1290,7 +1288,7 @@ export default function AulaVirtual({
 
     // Persistir y distribuir vía REST
     try {
-      const apiUrl = import.meta.env?.VITE_API_URL || "http://localhost:8000";
+      const apiUrl = API_URL;
       await fetch(`${apiUrl}/api/aulas/${aulaId || "AULA-101"}/intervencion-completada`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1609,7 +1607,7 @@ export default function AulaVirtual({
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ tipo: "pantalla", pantalla: payloadPantalla }));
         }
-        fetch(`http://localhost:8000/api/salas/${aulaId}/pantalla`, {
+        fetch(`${API_URL}/api/salas/${aulaId}/pantalla`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payloadPantalla)
@@ -1735,7 +1733,7 @@ export default function AulaVirtual({
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ tipo: "pantalla", pantalla: payloadSoftware }));
     }
-    fetch(`http://localhost:8000/api/salas/${aulaId}/pantalla`, {
+    fetch(`${API_URL}/api/salas/${aulaId}/pantalla`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payloadSoftware)
@@ -1786,7 +1784,7 @@ export default function AulaVirtual({
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ tipo: "pantalla", pantalla: stopPayload }));
     }
-    fetch(`http://localhost:8000/api/salas/${aulaId}/pantalla`, {
+    fetch(`${API_URL}/api/salas/${aulaId}/pantalla`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(stopPayload)
@@ -1834,7 +1832,7 @@ export default function AulaVirtual({
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ tipo: "pantalla", pantalla: cederPayload }));
     }
-    fetch(`http://localhost:8000/api/salas/${aulaId}/pantalla`, {
+    fetch(`${API_URL}/api/salas/${aulaId}/pantalla`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(cederPayload)
@@ -1921,7 +1919,7 @@ export default function AulaVirtual({
         wsRef.current.close();
       }
       if (userKey) {
-        await fetch(`http://localhost:8000/api/salas/${aulaId}/presencia/${userKey}`, {
+        await fetch(`${API_URL}/api/salas/${aulaId}/presencia/${userKey}`, {
           method: "DELETE"
         });
       }

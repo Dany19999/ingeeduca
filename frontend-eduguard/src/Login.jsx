@@ -19,6 +19,7 @@ import {
   Database
 } from "lucide-react";
 import heroImg from "./assets/image.png";
+import { API_URL } from "./config/api.js";
 
 export default function Login({ onLoginSuccess }) {
   const [modo, setModo] = useState("login"); // 'login' | 'registro'
@@ -70,7 +71,7 @@ export default function Login({ onLoginSuccess }) {
 
       setCargando(true);
       try {
-        const res = await fetch("http://localhost:8000/api/v1/auth/register", {
+        const res = await fetch(`${API_URL}/api/v1/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -95,7 +96,7 @@ export default function Login({ onLoginSuccess }) {
         }, 900);
       } catch (err) {
         if (err.message.includes("Failed to fetch") || err.name === "TypeError") {
-          setError("No se pudo conectar con el backend (FastAPI en puerto 8000). Asegúrate de iniciar 'iniciar_backend.bat'.");
+          setError(`No se pudo conectar con el servidor backend (${API_URL}). Verifica tu conexión o el estado del servicio.`);
         } else {
           setError(err.message || "Error al registrar la cuenta.");
         }
@@ -111,7 +112,7 @@ export default function Login({ onLoginSuccess }) {
 
       setCargando(true);
       try {
-        const res = await fetch("http://localhost:8000/api/v1/auth/login", {
+        const res = await fetch(`${API_URL}/api/v1/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -131,7 +132,7 @@ export default function Login({ onLoginSuccess }) {
         onLoginSuccess(data);
       } catch (err) {
         if (err.message.includes("Failed to fetch") || err.name === "TypeError") {
-          setError("No se pudo conectar con el backend (FastAPI en puerto 8000). Asegúrate de iniciar 'iniciar_backend.bat'.");
+          setError(`No se pudo conectar con el servidor backend (${API_URL}). Verifica tu conexión o el estado del servicio.`);
         } else {
           setError(err.message || "Error de autenticación.");
         }

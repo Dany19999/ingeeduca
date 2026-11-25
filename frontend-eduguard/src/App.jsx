@@ -3,6 +3,7 @@ import Login from "./Login.jsx";
 import DashboardDocente from "./pages/DashboardDocente.jsx";
 import DashboardEstudiante from "./pages/DashboardEstudiante.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import { API_URL } from "./config/api.js";
 
 export default function App() {
   const [usuarioActivo, setUsuarioActivo] = useState(() => {
@@ -28,8 +29,8 @@ export default function App() {
     const cargarDatos = async () => {
       try {
         const [resClases, resEstudiantes] = await Promise.all([
-          fetch("http://localhost:8000/api/clases"),
-          fetch("http://localhost:8000/api/estudiantes/conectados")
+          fetch(`${API_URL}/api/clases`),
+          fetch(`${API_URL}/api/estudiantes/conectados`)
         ]);
         if (resClases.ok) {
           const dataClases = await resClases.json();
@@ -52,7 +53,7 @@ export default function App() {
   // Manejar creación de nueva clase por el Docente (Persistida en PostgreSQL)
   const handleCrearClase = async (nuevaClase) => {
     try {
-      const res = await fetch("http://localhost:8000/api/clases", {
+      const res = await fetch(`${API_URL}/api/clases`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -81,7 +82,7 @@ export default function App() {
 
     // Notificar presencia al backend inmediatamente
     try {
-      await fetch(`http://localhost:8000/api/salas/${aulaId}/presencia`, {
+      await fetch(`${API_URL}/api/salas/${aulaId}/presencia`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -144,7 +145,7 @@ export default function App() {
   const handleEmitirMetrica = async (metrica) => {
     // 1. Persistir métrica biométrica en la base de datos PostgreSQL eduguard_tesis_db
     try {
-      await fetch("http://localhost:8000/api/metricas/atencion", {
+      await fetch(`${API_URL}/api/metricas/atencion`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

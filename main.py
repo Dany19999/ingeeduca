@@ -41,7 +41,13 @@ app = FastAPI(
 # Configuración de CORS para enlace con el Frontend en React / Vite
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://ingeeduca-web.onrender.com",
+        "https://ingeeduca.onrender.com",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "*"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
