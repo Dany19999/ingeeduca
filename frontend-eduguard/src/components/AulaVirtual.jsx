@@ -126,7 +126,13 @@ export default function AulaVirtual({
   const [modoDiseno, setModoDiseno] = useState("escenario");
 
   // Panel lateral derecho: "chat-vivo" (Chat de Sala en Vivo), "chat-gemini" (Asesor IA), "participantes", null
-  const [panelLateral, setPanelLateral] = useState("chat-vivo");
+  // En móvil (< 768px), el chat debe iniciar cerrado por defecto para no aplastar el aula
+  const [panelLateral, setPanelLateral] = useState(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      return null;
+    }
+    return "chat-vivo";
+  });
   const [mensajesChat, setMensajesChat] = useState([]);
   const [mensajesNoLeidos, setMensajesNoLeidos] = useState(0);
 
@@ -164,6 +170,45 @@ export default function AulaVirtual({
   const [mostrarModalIntervencion, setMostrarModalIntervencion] = useState(false);
   const [opcionPreguntaSeleccionada, setOpcionPreguntaSeleccionada] = useState(null);
   const [tiempoDescansoVisual, setTiempoDescansoVisual] = useState(15);
+  const [intervencionEnviadaA, setIntervencionEnviadaA] = useState(null);
+
+  const enviarIntervencionRapida = async (est) => {
+    const stId = est.id || est.nombre;
+    setIntervencionEnviadaA(stId);
+    const payload = {
+      tipo: "INTERVENCION_DOCENTE",
+      aula_id: aulaId || "AULA-101",
+      estudiante: est.nombre || "Estudiante",
+      estudiante_id: est.id || est.db_id || null,
+      motivo: "atencion",
+      titulo: "¡Pausa Activa de Atención!",
+      mensaje: `Estimado(a) ${est.nombre || "Estudiante"}, el docente solicita reforzar la concentración en el modelado técnico.`,
+      pregunta_rapida: {
+        enunciado: "¿Cuál es el factor de aceleración sísmica (Z) para Zona 4 según la Norma E.030?",
+        opciones: ["Z = 0.45", "Z = 0.35", "Z = 0.25"],
+        correcta: 0
+      }
+    };
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      try {
+        wsRef.current.send(JSON.stringify(payload));
+      } catch (e) {
+        console.warn("Error enviando por ws:", e);
+      }
+    }
+    try {
+      await fetch(`${API_URL}/api/aulas/${aulaId || "AULA-101"}/intervencion`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.warn("Error enviando intervencion:", err);
+    }
+    setTimeout(() => {
+      setIntervencionEnviadaA(null);
+    }, 4000);
+  };
   const wsAlertasEstudianteRef = useRef(null);
   const conteoDistraccionRef = useRef(0);
   const modeloIaRef = useRef(null);
@@ -1974,30 +2019,31 @@ export default function AulaVirtual({
         </div>
       )}
 
-      {/* 1. TOP HEADER MODERNO */}
-      <header className="h-14 bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 z-30 shadow-xs">
-        <div className="flex items-center gap-3">
+      {/* 1. TOP HEADER MODERNO CON SAFE AREA */}
+      <header className="min-h-[56px] pt-[env(safe-area-inset-top)] bg-white/95 backdrop-blur-xl border-b border-slate-200 px-2.5 sm:px-6 flex items-center justify-between shrink-0 z-30 shadow-xs">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={onSalir}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer border border-slate-200 shadow-xs"
+            className="flex items-center gap-1 sm:gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 px-2 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer border border-slate-200 shadow-xs shrink-0"
             title="Salir del aula"
           >
             <ChevronLeft size={16} />
-            <span>Abandonar Sala</span>
+            <span className="hidden sm:inline">Abandonar Sala</span>
+            <span className="sm:hidden">Salir</span>
           </button>
 
-          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
+          <div className="h-5 w-px bg-slate-200 hidden sm:block shrink-0" />
 
           {/* Nombre dinámico de la sesión en PostgreSQL y badge EN VIVO */}
-          <div className="flex items-center gap-2">
-            <h1 className="text-sm font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-              <span className="truncate max-w-[200px] sm:max-w-xs md:max-w-md">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <h1 className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight truncate">
+              <span className="truncate max-w-[120px] xs:max-w-[150px] sm:max-w-md inline-block">
                 {clase?.nombre || clase?.titulo || "Sesión de Aprendizaje Sincrónico"}
               </span>
             </h1>
-            <span className="badge-pill bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+            <span className="badge-pill bg-rose-50 text-rose-700 border border-rose-200 text-[9px] sm:text-[10px] font-bold shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
-              ● EN VIVO DENTRO DEL AULA
+              <span className="hidden sm:inline">● EN VIVO </span>DENTRO DEL AULA
             </span>
           </div>
         </div>
@@ -2235,9 +2281,11 @@ export default function AulaVirtual({
                                 <Monitor size={32} />
                               </div>
                               <div className="space-y-1">
-                                <div className="text-white font-bold text-base flex items-center justify-center gap-2">
-                                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-                                  <span>{presentadorActual.nombre || "El Docente"} está compartiendo pantalla</span>
+                                <div className="text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2">
+                                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping shrink-0" />
+                                  <span className="truncate max-w-[280px] sm:max-w-none">
+                                    ¡{nombreDocente || presentadorActual.nombre || "Mg. Ing. Víctor Huamán"} está transmitiendo su pantalla!
+                                  </span>
                                 </div>
                                 <p className="text-slate-400 text-xs">
                                   Sincronizando fotogramas y transmisión en vivo de la clase...
@@ -2525,8 +2573,50 @@ export default function AulaVirtual({
                   </div>
                 </div>
 
+                {/* RESUMEN DE ATENCIÓN GRUPAL Y ESTADO DE CABINA (SOLO MODO DOCENTE) */}
+                {rol === "docente" && (
+                  <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950 text-white p-3.5 border border-emerald-500/40 shadow-sm space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles size={14} className="text-emerald-400" />
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
+                          Telemetría de Atención Grupal
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                        {listaEstudiantesActivos.length} Alumnos
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between bg-white/5 rounded-xl p-2.5 border border-white/10">
+                      <div>
+                        <div className="text-2xl font-black text-emerald-400 font-mono">
+                          {listaEstudiantesActivos.length > 0
+                            ? Math.round(listaEstudiantesActivos.reduce((a, c) => a + (Number(c.atencion) || 85), 0) / listaEstudiantesActivos.length)
+                            : 89}%
+                        </div>
+                        <div className="text-[10px] text-slate-400">Promedio general de atención</div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 text-[10px] font-mono">
+                        <span className={`px-2 py-0.5 rounded-md font-bold flex items-center gap-1 ${
+                          micActivo ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                        }`}>
+                          {micActivo ? <Mic size={11} /> : <MicOff size={11} />}
+                          <span>{micActivo ? "Mic Activo" : "Silenciado"}</span>
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-md font-bold flex items-center gap-1 ${
+                          camaraActiva ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                        }`}>
+                          {camaraActiva ? <Video size={11} /> : <VideoOff size={11} />}
+                          <span>{camaraActiva ? "Cámara Activa" : "Cámara Off"}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* 2. MÓDULO CÁMARA DEL ESTUDIANTE (TU CÁMARA CON BIOMETRÍA EN VIVO) */}
-                <div className="rounded-2xl bg-white border-2 border-indigo-400 hover:border-indigo-500 transition-all relative overflow-hidden shadow-sm flex flex-col justify-between p-3.5 group min-h-[260px]">
+                <div className="w-full rounded-2xl bg-white border-2 border-indigo-400 hover:border-indigo-500 transition-all relative overflow-hidden shadow-sm flex flex-col justify-between p-3.5 group min-h-[260px]">
                   
                   {/* Visualización de Cámara Web Real del Usuario */}
                   {camaraActiva ? (
@@ -2714,12 +2804,12 @@ export default function AulaVirtual({
                   </div>
                 </div>
 
-                {/* 3. RESUMEN RÁPIDO DE OTROS COMPAÑEROS CONECTADOS */}
-                <div className="flex-1 rounded-2xl bg-white border border-slate-200 p-3.5 flex flex-col justify-between space-y-2 shadow-xs">
+                {/* 3. RESUMEN RÁPIDO DE PARTICIPANTES / ALUMNOS CONECTADOS */}
+                <div className="w-full rounded-2xl bg-white border border-slate-200 p-3.5 flex flex-col justify-between space-y-2 shadow-xs">
                   <div className="flex justify-between items-center text-xs font-bold text-slate-800">
                     <span className="flex items-center gap-1.5 text-slate-900">
                       <Users size={14} className="text-emerald-600" />
-                      Compañeros en Sala ({listaEstudiantesActivos.length})
+                      {rol === "docente" ? `Alumnos en Sala (${listaEstudiantesActivos.length})` : `Compañeros en Sala (${listaEstudiantesActivos.length})`}
                     </span>
                     <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                       En vivo
@@ -2728,26 +2818,39 @@ export default function AulaVirtual({
 
                   {listaEstudiantesActivos.length === 0 ? (
                     <div className="py-4 text-center text-slate-400 text-xs font-medium">
-                      Sin otros compañeros conectados en sala aún
+                      Sin alumnos conectados en sala aún
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      {listaEstudiantesActivos.slice(0, 4).map((est, i) => {
+                    <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5">
+                      {listaEstudiantesActivos.map((est, i) => {
                         const st = obtenerDatosEstado(est.emocion);
+                        const estKey = est.id || est.nombre;
                         return (
                           <div
-                            key={est.id || i}
-                            className="p-2 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between text-xs hover:border-slate-300 transition-all shadow-2xs"
+                            key={estKey || i}
+                            className="p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs hover:border-slate-300 transition-all shadow-2xs gap-2"
                           >
-                            <div className="flex items-center gap-1.5 truncate font-bold text-slate-800">
-                              <span className={`w-1.5 h-1.5 rounded-full ${st.dot} shrink-0`} />
-                              <span className="truncate">{(est.nombre || "Estudiante").split(" ")[0]}</span>
+                            <div className="flex items-center gap-2 truncate min-w-0">
+                              <span className={`w-2 h-2 rounded-full ${st.dot} shrink-0`} />
+                              <div className="truncate">
+                                <span className="font-bold text-slate-800 block text-xs truncate">{(est.nombre || "Estudiante")}</span>
+                                <span className="text-[10px] text-slate-500 font-mono">{est.atencion}% atención</span>
+                              </div>
                             </div>
-                            <div className="flex justify-between items-center text-[10px] text-slate-500 mt-1.5">
-                              <span className="font-mono font-medium">{est.atencion}%</span>
+                            <div className="flex items-center gap-1.5 shrink-0">
                               <span className={`px-1.5 py-0.5 rounded-md font-bold text-[9px] border ${st.badge}`}>
                                 {st.emoji} {st.nombre}
                               </span>
+                              {rol === "docente" && (
+                                <button
+                                  onClick={() => enviarIntervencionRapida(est)}
+                                  className="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] flex items-center gap-1 transition-all shadow-xs cursor-pointer active:scale-95"
+                                  title={`Enviar intervención pedagógica a ${est.nombre || "Estudiante"}`}
+                                >
+                                  <Sparkles size={11} />
+                                  <span>{intervencionEnviadaA === estKey ? "¡Enviado!" : "Intervenir"}</span>
+                                </button>
+                              )}
                             </div>
                           </div>
                         );
@@ -3276,10 +3379,10 @@ export default function AulaVirtual({
 
         {/* PANEL LATERAL DERECHO DESPLEGABLE (CHAT EN VIVO / ASESOR IA / PARTICIPANTES) */}
         {panelLateral && (
-          <aside className="w-80 sm:w-96 bg-white border-l border-slate-200 flex flex-col h-full shadow-2xl shrink-0 z-30 animate-in slide-in-from-right duration-200">
+          <aside className="fixed inset-0 z-50 md:static md:w-80 lg:w-96 bg-white border-l border-slate-200 flex flex-col h-full shadow-2xl shrink-0 animate-in slide-in-from-bottom md:slide-in-from-right duration-200 pt-[env(safe-area-inset-top)] md:pt-0">
             
             {/* Header del Panel Lateral con selector de pestaña */}
-            <div className="h-12 border-b border-slate-200 px-3 flex items-center justify-between bg-white shrink-0">
+            <div className="h-14 md:h-12 border-b border-slate-200 px-3 flex items-center justify-between bg-white shrink-0">
               <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
                 <button
                   onClick={() => {
@@ -3326,10 +3429,11 @@ export default function AulaVirtual({
 
               <button
                 onClick={() => setPanelLateral(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
                 title="Cerrar panel"
               >
                 <X size={16} />
+                <span className="md:hidden">Cerrar</span>
               </button>
             </div>
 
@@ -3344,6 +3448,7 @@ export default function AulaVirtual({
                   mensajes={mensajesChat}
                   onEnviarMensaje={handleEnviarMensajeChat}
                   temaClase={clase?.nombre || "Modelado BIM & Revit"}
+                  onCerrar={() => setPanelLateral(null)}
                 />
               )}
 
@@ -3859,6 +3964,26 @@ export default function AulaVirtual({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Botón Flotante de Chat en Móvil (< md) */}
+      {!panelLateral && (
+        <button
+          onClick={() => {
+            setPanelLateral("chat-vivo");
+            setMensajesNoLeidos(0);
+          }}
+          className="md:hidden fixed bottom-20 right-4 z-40 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 font-bold text-xs border border-white/20 active:scale-95 transition-all cursor-pointer"
+          title="Abrir chat en vivo"
+        >
+          <MessageSquare size={18} />
+          <span>Chat</span>
+          {mensajesNoLeidos > 0 && (
+            <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center animate-bounce shadow">
+              {mensajesNoLeidos}
+            </span>
+          )}
+        </button>
       )}
 
       {/* Modal Ficha Técnica y Matriz de Confusión para Sustentación de Tesis */}

@@ -10,7 +10,8 @@ import {
   VolumeX,
   Check,
   Clock,
-  User
+  User,
+  X
 } from "lucide-react";
 
 /**
@@ -25,7 +26,8 @@ export default function ChatEnVivo({
   wsRef = null,
   mensajes = [],
   onEnviarMensaje = null,
-  temaClase = "Modelado BIM & Revit"
+  temaClase = "Modelado BIM & Revit",
+  onCerrar = null
 }) {
   const [textoMensaje, setTextoMensaje] = useState("");
   const [mensajesLocales, setMensajesLocales] = useState(mensajes || []);
@@ -200,17 +202,30 @@ export default function ChatEnVivo({
           </div>
         </div>
 
-        <button
-          onClick={() => setSonidoHabilitado(!sonidoHabilitado)}
-          className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-            sonidoHabilitado
-              ? "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
-              : "bg-rose-50 text-rose-600 border-rose-200"
-          }`}
-          title={sonidoHabilitado ? "Silenciar notificaciones" : "Activar sonido"}
-        >
-          {sonidoHabilitado ? <Volume2 size={13} /> : <VolumeX size={13} />}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setSonidoHabilitado(!sonidoHabilitado)}
+            className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+              sonidoHabilitado
+                ? "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200"
+                : "bg-rose-50 text-rose-600 border-rose-200"
+            }`}
+            title={sonidoHabilitado ? "Silenciar notificaciones" : "Activar sonido"}
+          >
+            {sonidoHabilitado ? <Volume2 size={13} /> : <VolumeX size={13} />}
+          </button>
+
+          {typeof onCerrar === "function" && (
+            <button
+              onClick={onCerrar}
+              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200 transition-colors cursor-pointer flex items-center gap-1 text-xs font-bold"
+              title="Cerrar chat"
+            >
+              <X size={14} />
+              <span className="text-[11px]">✕ Cerrar</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Área de Mensajes */}
