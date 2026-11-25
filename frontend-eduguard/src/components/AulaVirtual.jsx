@@ -2086,11 +2086,11 @@ export default function AulaVirtual({
 
       {/* 2. ÁREA PRINCIPAL DE CONTENIDO */}
       <div className="flex-1 flex min-h-0 overflow-hidden relative">
-        <div className="flex-1 p-3 sm:p-4 flex flex-col gap-3 min-h-0 overflow-hidden">
+        <div className="flex-1 p-2 sm:p-4 flex flex-col gap-3 min-h-0 overflow-y-auto lg:overflow-hidden">
           
           {/* MODO 1: ESCENARIO PRINCIPAL (BIM / REVIT / S10 + TIRA DE CÁMARAS) */}
           {modoDiseno === "escenario" && (
-            <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0 overflow-hidden">
+            <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0 lg:overflow-hidden">
               
               {/* Pantalla Compartida Principal (Visualizador BIM Interactivo o Screen Share) */}
               <div className="flex-1 rounded-2xl bg-white border border-slate-200 overflow-hidden flex flex-col shadow-sm relative">

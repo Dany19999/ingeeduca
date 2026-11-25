@@ -38,10 +38,12 @@ import {
   Camera,
   Share2,
   Sliders,
-  MessageSquare
+  MessageSquare,
+  Menu
 } from "lucide-react";
 import AulaVirtual from "../components/AulaVirtual.jsx";
 import ChatEnVivo from "../components/ChatEnVivo.jsx";
+import ChatAgent from "../components/ChatAgent.jsx";
 import FichaTecnicaModal from "../components/FichaTecnicaModal.jsx";
 
 export default function DashboardDocente({
@@ -61,6 +63,7 @@ export default function DashboardDocente({
   const [busqueda, setBusqueda] = useState("");
   const [toastMensaje, setToastMensaje] = useState(null);
   const [seccionActiva, setSeccionActiva] = useState("monitoreo");
+  const [sidebarMovilAbierto, setSidebarMovilAbierto] = useState(false);
   const [modalIntervencion, setModalIntervencion] = useState(null);
 
   // Refs y estados para Transmisión Sincrónica Nativa del Docente en el Dashboard
@@ -1037,8 +1040,194 @@ export default function DashboardDocente({
         </div>
       )}
 
-      {/* 1. SIDEBAR EJECUTIVO DOCENTE */}
-      <aside className="w-64 min-w-[256px] bg-white border-r border-slate-200 text-slate-700 flex flex-col justify-between h-screen sticky top-0 z-40 select-none shadow-xs">
+      {/* 1. DRAWER MÓVIL DESLIZABLE CON OVERLAY (< 768px / md:hidden) */}
+      {sidebarMovilAbierto && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Fondo oscuro semitransparente */}
+          <div
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+            onClick={() => setSidebarMovilAbierto(false)}
+          />
+
+          {/* Cajón lateral */}
+          <aside className="relative w-72 max-w-[85vw] bg-white text-slate-700 flex flex-col justify-between h-full shadow-2xl z-10 animate-in slide-in-from-left duration-300 select-none overflow-y-auto">
+            <div>
+              {/* Cabecera del Drawer */}
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-base shadow-sm">
+                    IE
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-sm tracking-tight text-slate-900 leading-tight">
+                      INGE<span className="text-emerald-600">EDUCA</span>
+                    </div>
+                    <div className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Control Room Docente
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSidebarMovilAbierto(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  aria-label="Cerrar menú"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Menú de Navegación Vertical */}
+              <nav className="p-4 space-y-1.5">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 py-2">
+                  Supervisión de Aulas
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSeccionActiva("monitoreo");
+                    setSidebarMovilAbierto(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                    seccionActiva === "monitoreo"
+                      ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 border border-emerald-500"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <LayoutDashboard size={16} />
+                    <span>Monitoreo en Tiempo Real</span>
+                  </div>
+                  <span className={`w-2 h-2 rounded-full ${seccionActiva === "monitoreo" ? "bg-white" : "bg-emerald-500"} animate-ping`} />
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSeccionActiva("clases");
+                    setSidebarMovilAbierto(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                    seccionActiva === "clases"
+                      ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 border border-emerald-500"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Video size={16} />
+                    <span>Salas de Clases BIM</span>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md ${seccionActiva === "clases" ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-700 border border-slate-200"}`}>
+                    {clasesActivas.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSeccionActiva("estudiantes");
+                    setSidebarMovilAbierto(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                    seccionActiva === "estudiantes"
+                      ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 border border-emerald-500"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Users size={16} />
+                    <span>Matriz de Alumnos</span>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md ${seccionActiva === "estudiantes" ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-700 border border-slate-200"}`}>
+                    {estudiantesConectados.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSeccionActiva("analitica");
+                    setSidebarMovilAbierto(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                    seccionActiva === "analitica"
+                      ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 border border-emerald-500"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <BarChart2 size={16} />
+                    <span>Analítica de Atención</span>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md font-bold ${seccionActiva === "analitica" ? "bg-emerald-700 text-white" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
+                    {totalAtencion}%
+                  </span>
+                </button>
+
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 pt-5 pb-2">
+                  Acompañamiento Docente
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSeccionActiva("asistente");
+                    setSidebarMovilAbierto(false);
+                  }}
+                  className={`w-full text-left p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 ${
+                    seccionActiva === "asistente"
+                      ? "bg-emerald-50 border-emerald-400 ring-2 ring-emerald-500/20 shadow-xs"
+                      : "bg-slate-50 border-slate-200 hover:bg-slate-100/80"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                    <div className="flex items-center gap-2">
+                      <Bot size={15} className="text-emerald-600" />
+                      <span>Asistente de Cátedra</span>
+                    </div>
+                    {seccionActiva === "asistente" && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Herramientas de apoyo para dinámicas de aula y refuerzo pedagógico.
+                  </p>
+                  <div className="text-[10px] font-mono text-emerald-700 flex items-center gap-1.5 pt-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Soporte en línea
+                  </div>
+                </button>
+              </nav>
+            </div>
+
+            {/* Perfil del Docente & Cerrar Sesión en Drawer */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center font-bold text-xs shrink-0">
+                    {usuarioActivo?.nombre ? usuarioActivo.nombre.substring(0, 2).toUpperCase() : "DC"}
+                  </div>
+                  <div className="overflow-hidden">
+                    <div className="text-xs font-bold text-slate-900 truncate max-w-[130px]">
+                      {usuarioActivo?.nombre || "Docente Titular"}
+                    </div>
+                    <div className="text-[10px] text-slate-500 capitalize truncate">
+                      {usuarioActivo?.rol || "Docente"} • INGEEDUCA
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={onLogout}
+                  className="p-2 rounded-xl bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer shrink-0"
+                  title="Cerrar Sesión"
+                >
+                  <LogOut size={15} />
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* 2. SIDEBAR EJECUTIVO DOCENTE EN ESCRITORIO (md:flex / lg:w-72) */}
+      <aside className="hidden md:flex md:w-64 lg:w-72 md:min-w-[256px] bg-white border-r border-slate-200 text-slate-700 flex-col justify-between h-screen sticky top-0 z-40 select-none shadow-xs shrink-0">
         <div>
           {/* Logo y Branding Institucional */}
           <div className="p-6 border-b border-slate-100 flex items-center gap-3">
@@ -1132,10 +1321,22 @@ export default function DashboardDocente({
               Acompañamiento Docente
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-                <Bot size={15} className="text-emerald-600" />
-                <span>Asistente de Cátedra</span>
+            <button
+              onClick={() => setSeccionActiva("asistente")}
+              className={`w-full text-left p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 ${
+                seccionActiva === "asistente"
+                  ? "bg-emerald-50 border-emerald-400 ring-2 ring-emerald-500/20 shadow-xs"
+                  : "bg-slate-50 border-slate-200 hover:bg-slate-100/80"
+              }`}
+            >
+              <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                <div className="flex items-center gap-2">
+                  <Bot size={15} className="text-emerald-600" />
+                  <span>Asistente de Cátedra</span>
+                </div>
+                {seccionActiva === "asistente" && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                )}
               </div>
               <p className="text-[11px] text-slate-500 leading-relaxed">
                 Herramientas de apoyo para dinámicas de aula y refuerzo pedagógico.
@@ -1144,7 +1345,7 @@ export default function DashboardDocente({
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Soporte en línea
               </div>
-            </div>
+            </button>
           </nav>
         </div>
 
@@ -1160,7 +1361,7 @@ export default function DashboardDocente({
                   {usuarioActivo?.nombre || "Docente Titular"}
                 </div>
                 <div className="text-[10px] text-slate-500 capitalize truncate">
-                  {usuarioActivo?.rol || "Docente"} • INGEDUCA
+                  {usuarioActivo?.rol || "Docente"} • INGEEDUCA
                 </div>
               </div>
             </div>
@@ -1176,58 +1377,82 @@ export default function DashboardDocente({
         </div>
       </aside>
 
-      {/* 2. CONTENIDO PRINCIPAL */}
-      <div className={`flex-1 flex flex-col min-w-0 ${seccionActiva === "monitoreo" ? "h-screen overflow-hidden" : "overflow-y-auto"}`}>
+      {/* 3. CONTENIDO PRINCIPAL (Adaptativo a Mobile y Desktop) */}
+      <div className={`flex-1 flex flex-col min-w-0 ${seccionActiva === "monitoreo" ? "lg:h-screen lg:overflow-hidden overflow-y-auto" : "overflow-y-auto"}`}>
         
-        {/* Top Header Bar */}
-        <header className="h-14 sm:h-16 border-b border-slate-200 bg-white/95 backdrop-blur-md px-6 sm:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs shrink-0">
-          <div className="flex items-center gap-3">
-            <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
-              {seccionActiva === "monitoreo" && "Panel Docente • Monitoreo en Tiempo Real"}
-              {seccionActiva === "clases" && "Gestión de Salas y Clases en Vivo"}
-              {(seccionActiva === "estudiantes" || seccionActiva === "matriz") && "Padrón General • Matriz de Alumnos"}
-              {seccionActiva === "analitica" && "Participación y Avance de Aula"}
+        {/* Top Header Bar con Botón Hamburguesa en Móvil */}
+        <header className="h-14 sm:h-16 border-b border-slate-200 bg-white/95 backdrop-blur-md px-3 sm:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Botón hamburguesa en móvil (< 768px / md:hidden) */}
+            <button
+              onClick={() => setSidebarMovilAbierto(true)}
+              className="md:hidden p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors cursor-pointer shrink-0"
+              aria-label="Abrir menú"
+            >
+              <Menu size={18} />
+            </button>
+
+            {/* Logo móvil compacto */}
+            <div className="md:hidden flex items-center gap-1.5 shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-xs shadow-sm">
+                IE
+              </div>
+            </div>
+
+            <h2 className="text-xs sm:text-base font-extrabold text-slate-900 tracking-tight truncate">
+              {seccionActiva === "monitoreo" && "Monitoreo en Tiempo Real"}
+              {seccionActiva === "clases" && "Salas de Clases BIM"}
+              {(seccionActiva === "estudiantes" || seccionActiva === "matriz") && "Matriz de Alumnos"}
+              {seccionActiva === "analitica" && "Analítica de Atención"}
+              {seccionActiva === "asistente" && "Asistente de Cátedra"}
             </h2>
+
             {seccionActiva === "monitoreo" ? (
-              <span className="badge-pill bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="hidden sm:inline-flex badge-pill bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Sesión en Vivo
               </span>
             ) : (seccionActiva === "estudiantes" || seccionActiva === "matriz") ? (
-              <span className="badge-pill bg-blue-50 text-blue-700 border border-blue-200">
+              <span className="hidden sm:inline-flex badge-pill bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                 Padrón Oficial
               </span>
+            ) : seccionActiva === "asistente" ? (
+              <span className="hidden sm:inline-flex badge-pill bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Tutor IA
+              </span>
             ) : (
-              <span className="badge-pill bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="hidden sm:inline-flex badge-pill bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Clase en Curso
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {clasesActivas.length > 0 && seccionActiva !== "monitoreo" && (
               <button
                 onClick={() => setClaseEnVivoActiva(clasesActivas[0])}
-                className="btn-emerald text-xs font-bold flex items-center gap-2 shadow-sm"
+                className="btn-emerald text-xs font-bold hidden sm:flex items-center gap-2 shadow-sm"
               >
                 <Video size={15} />
-                <span>Aula Sincrónica en Vivo</span>
+                <span>Aula Sincrónica</span>
               </button>
             )}
             <button
               onClick={() => setModalNuevaClase(true)}
-              className="btn-obsidian text-xs font-bold"
+              className="btn-obsidian text-xs font-bold flex items-center gap-1.5"
             >
               <Plus size={15} />
-              <span>Nueva Sala</span>
+              <span className="hidden sm:inline">Nueva Sala</span>
+              <span className="sm:hidden">Sala</span>
             </button>
           </div>
         </header>
 
         {/* Cuerpo del Dashboard */}
-        <div className={`w-full max-w-[1600px] ${seccionActiva === "monitoreo" ? "p-3 sm:p-4 flex-1 flex flex-col overflow-hidden space-y-2.5 min-h-0" : "p-4 sm:p-6 space-y-4"}`}>
+        <div className={`w-full max-w-[1600px] ${seccionActiva === "monitoreo" ? "p-3 sm:p-4 flex-1 flex flex-col lg:overflow-hidden space-y-2.5 min-h-0" : "p-4 sm:p-6 space-y-4"}`}>
 
           {/* 2. Banner para Matriz de Alumnos (Padrón Académico Histórico) */}
           {(seccionActiva === "estudiantes" || seccionActiva === "matriz") && (
@@ -1281,12 +1506,12 @@ export default function DashboardDocente({
 
           {/* 3. Tarjetas KPI de Telemetría en Vivo (Únicamente en Monitoreo en Tiempo Real) */}
           {seccionActiva === "monitoreo" && (
-            <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
               {/* KPI 1 */}
               <div className="card-obsidian p-4">
                 <div className="flex justify-between items-center text-slate-500 text-[11px] font-extrabold uppercase tracking-wider">
-                  <span>Alumnos Conectados</span>
-                  <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-700 border border-cyan-200 flex items-center justify-center font-bold">
+                  <span className="truncate pr-1">Alumnos Conectados</span>
+                  <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-700 border border-cyan-200 flex items-center justify-center font-bold shrink-0">
                     <Users size={15} />
                   </div>
                 </div>
@@ -1294,7 +1519,7 @@ export default function DashboardDocente({
                   {estudiantesConectados.length}
                 </div>
                 <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1 text-emerald-700 font-bold text-[11px]">
+                  <span className="flex items-center gap-1 text-emerald-700 font-bold text-[11px] whitespace-nowrap">
                     <CheckCircle2 size={13} /> Sincronizado
                   </span>
                   <span className="text-slate-400 font-mono text-[10px]">WebSocket</span>
@@ -1304,8 +1529,8 @@ export default function DashboardDocente({
               {/* KPI 2 */}
               <div className="card-obsidian p-4">
                 <div className="flex justify-between items-center text-slate-500 text-[11px] font-extrabold uppercase tracking-wider">
-                  <span>Índice de Atención Grupal</span>
-                  <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center font-bold">
+                  <span className="truncate pr-1">Índice de Atención Grupal</span>
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center font-bold shrink-0">
                     <Eye size={15} />
                   </div>
                 </div>
@@ -1323,8 +1548,8 @@ export default function DashboardDocente({
               {/* KPI 3 */}
               <div className="card-obsidian p-4">
                 <div className="flex justify-between items-center text-slate-500 text-[11px] font-extrabold uppercase tracking-wider">
-                  <span>Alertas de Fatiga</span>
-                  <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 flex items-center justify-center font-bold">
+                  <span className="truncate pr-1">Alertas de Fatiga</span>
+                  <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 flex items-center justify-center font-bold shrink-0">
                     <AlertTriangle size={15} />
                   </div>
                 </div>
@@ -1332,7 +1557,7 @@ export default function DashboardDocente({
                   {alertasTotales}
                 </div>
                 <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-rose-600">
-                  <span className="flex items-center gap-1 font-bold text-[11px]">
+                  <span className="flex items-center gap-1 font-bold text-[11px] whitespace-nowrap">
                     <ShieldAlert size={13} /> Casos detectados
                   </span>
                   <span className="text-slate-400 text-[10px]">Intervención IA</span>
@@ -1342,18 +1567,18 @@ export default function DashboardDocente({
               {/* KPI 4 */}
               <div className="card-obsidian p-4">
                 <div className="flex justify-between items-center text-slate-500 text-[11px] font-extrabold uppercase tracking-wider">
-                  <span>Estado del Pipeline ML</span>
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold">
+                  <span className="truncate pr-1">Estado del Pipeline ML</span>
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold shrink-0">
                     <Activity size={15} />
                   </div>
                 </div>
-                <div className="text-xs font-bold text-emerald-700 mt-2 flex items-center gap-1.5">
+                <div className="text-xs font-bold text-emerald-700 mt-2 flex items-center gap-1.5 whitespace-nowrap">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                   Inferencia Facial Activa
                 </div>
                 <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="font-mono text-emerald-700 font-bold text-[11px]">30 FPS Stream</span>
-                  <span className="text-slate-400 text-[10px]">MediaPipe 68 pts</span>
+                  <span className="font-mono text-emerald-700 font-bold text-[11px] whitespace-nowrap">30 FPS Stream</span>
+                  <span className="text-slate-400 text-[10px] whitespace-nowrap">MediaPipe 68 pts</span>
                 </div>
               </div>
             </section>
@@ -1601,7 +1826,7 @@ export default function DashboardDocente({
                 </div>
 
                 {/* Tarjetas Principales del Reporte */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-1">
                     <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Atención Media</span>
                     <div className="text-3xl font-black text-emerald-700">
@@ -1824,12 +2049,12 @@ export default function DashboardDocente({
           {/* CABINA INTEGRADA DE CONTROL DOCENTE (LAYOUT DE 2 COLUMNAS SIN SCROLL)     */}
           {/* ========================================================================= */}
           {seccionActiva === "monitoreo" && (
-            <section className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 flex-1 min-h-0 overflow-hidden">
+            <section className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 flex-1 min-h-0 lg:overflow-hidden">
               {/* Canvas oculto para captura y broadcast sincrónico de fotogramas hacia el aula */}
               <canvas ref={canvasDocenteRef} className="hidden" />
 
               {/* 1. COLUMNA PRINCIPAL (aprox. 68% - lg:col-span-8): ESCENARIO DE TRANSMISIÓN */}
-              <div className="lg:col-span-8 h-full flex flex-col rounded-3xl border border-slate-800 bg-slate-950 text-white shadow-xl overflow-hidden relative">
+              <div className="lg:col-span-8 min-h-[380px] sm:min-h-[460px] lg:h-full flex flex-col rounded-3xl border border-slate-800 bg-slate-950 text-white shadow-xl overflow-hidden relative">
                 
                 {/* Topbar del Escenario */}
                 <div className="px-5 py-3 bg-slate-900/95 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
@@ -2017,7 +2242,7 @@ export default function DashboardDocente({
               </div>
 
               {/* 2. COLUMNA LATERAL (aprox. 32% - lg:col-span-4): MOSAICO DE ESTUDIANTES / CHAT EN VIVO */}
-              <div className="lg:col-span-4 h-full flex flex-col card-obsidian p-4 overflow-hidden shadow-xl">
+              <div className="lg:col-span-4 min-h-[420px] lg:h-full flex flex-col card-obsidian p-4 overflow-hidden shadow-xl">
                 {/* Header de la Columna Lateral con Tabs */}
                 <div className="pb-3 border-b border-slate-100 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
@@ -2281,7 +2506,7 @@ export default function DashboardDocente({
 
               {/* Contenido de la Tabla de Matriz */}
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left text-sm min-w-[700px]">
                   <thead className="bg-slate-50 text-slate-600 text-xs uppercase font-extrabold border-b border-slate-200 tracking-wider">
                     <tr>
                       <th className="py-3.5 px-6">Estudiante</th>
@@ -2381,6 +2606,32 @@ export default function DashboardDocente({
                     )}
                   </tbody>
                 </table>
+              </div>
+            </section>
+          )}
+
+          {/* 6. Sección de Asistente de Cátedra */}
+          {seccionActiva === "asistente" && (
+            <section className="card-obsidian p-4 sm:p-6 md:p-8 space-y-4">
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-bold shrink-0">
+                  <Bot size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    Asistente de Cátedra IA • Soporte Pedagógico Docente
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Consultas en tiempo real sobre dinámicas didácticas, refuerzo de modelado BIM y análisis de rendimiento
+                  </p>
+                </div>
+              </div>
+              <div className="h-[600px] border border-slate-200 rounded-2xl overflow-hidden bg-slate-50/50">
+                <ChatAgent
+                  usuario={usuarioActivo}
+                  rol="docente"
+                  temaClase="Modelado BIM & Cátedra Universitaria"
+                />
               </div>
             </section>
           )}

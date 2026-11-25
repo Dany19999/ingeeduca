@@ -110,8 +110,8 @@ export default function App() {
       if (existe) {
         return prev.map((e) =>
           (usuarioActivo.correo && e.correo === usuarioActivo.correo) ||
-          (usuarioActivo.email && e.correo === usuarioActivo.email) ||
-          e.nombre === usuarioActivo.nombre
+            (usuarioActivo.email && e.correo === usuarioActivo.email) ||
+            e.nombre === usuarioActivo.nombre
             ? { ...e, aulaId: clase.id, emocion: "Atento", atencion: 96 }
             : e
         );

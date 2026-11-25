@@ -12,7 +12,9 @@ import {
   CheckCircle2,
   Video,
   Bot,
-  Sparkles
+  Sparkles,
+  Menu,
+  X
 } from "lucide-react";
 import AulaVirtual from "../components/AulaVirtual.jsx";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
@@ -28,6 +30,7 @@ export default function DashboardEstudiante({
   const [seccionActiva, setSeccionActiva] = useState("clases");
   const [claseSeleccionada, setClaseSeleccionada] = useState(null);
   const [normaActiva, setNormaActiva] = useState("E.060");
+  const [sidebarMovilAbierto, setSidebarMovilAbierto] = useState(false);
 
   const obtenerDatosEstado = (emocion) => {
     const emo = (emocion || "").toUpperCase();
@@ -135,8 +138,183 @@ export default function DashboardEstudiante({
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-800 font-sans antialiased">
-      {/* 1. SIDEBAR IZQUIERDO EJECUTIVO DEL ESTUDIANTE */}
-      <aside className="w-64 min-w-[256px] bg-white border-r border-slate-200 text-slate-700 flex flex-col justify-between h-screen sticky top-0 z-40 select-none shadow-xs">
+      {/* 1. DRAWER MÓVIL DESLIZABLE CON OVERLAY (< 768px / md:hidden) */}
+      {sidebarMovilAbierto && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Fondo oscuro semitransparente */}
+          <div
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+            onClick={() => setSidebarMovilAbierto(false)}
+          />
+
+          {/* Cajón lateral */}
+          <aside className="relative w-72 max-w-[85vw] bg-white text-slate-700 flex flex-col justify-between h-full shadow-2xl z-10 animate-in slide-in-from-left duration-300 select-none overflow-y-auto">
+            <div>
+              {/* Logo y Branding */}
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-base shadow-sm">
+                    IE
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-sm tracking-tight text-slate-900 leading-tight">
+                      INGE<span className="text-emerald-600">EDUCA</span>
+                    </div>
+                    <div className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Portal del Estudiante
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSidebarMovilAbierto(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  aria-label="Cerrar menú"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Menú de Navegación Vertical */}
+              <nav className="p-4 space-y-1.5">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 py-2">
+                  Aprendizaje Sincrónico
+                </div>
+
+                <button
+                  onClick={() => {
+                    setSeccionActiva("clases");
+                    if (claseSeleccionada) setClaseSeleccionada(null);
+                    setSidebarMovilAbierto(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                    seccionActiva === "clases"
+                      ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 border border-emerald-500"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Video size={16} />
+                    <span>Clases en Vivo</span>
+                  </div>
+                  <span className={`w-2 h-2 rounded-full ${seccionActiva === "clases" ? "bg-white" : "bg-emerald-500"} animate-ping`} />
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSeccionActiva("especialidades");
+                    if (claseSeleccionada) setClaseSeleccionada(null);
+                    setSidebarMovilAbierto(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                    seccionActiva === "especialidades"
+                      ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 border border-emerald-500"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Compass size={16} />
+                    <span>Especialidades BIM</span>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md ${seccionActiva === "especialidades" ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-700 border border-slate-200"}`}>
+                    3
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSeccionActiva("normativas");
+                    if (claseSeleccionada) setClaseSeleccionada(null);
+                    setSidebarMovilAbierto(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                    seccionActiva === "normativas"
+                      ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 border border-emerald-500"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <FileText size={16} />
+                    <span>Biblioteca RNE</span>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md ${seccionActiva === "normativas" ? "bg-emerald-700 text-white" : "bg-amber-50 text-amber-700 border border-amber-200"}`}>
+                    RNE
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSeccionActiva("rendimiento");
+                    if (claseSeleccionada) setClaseSeleccionada(null);
+                    setSidebarMovilAbierto(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                    seccionActiva === "rendimiento"
+                      ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 border border-emerald-500"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Activity size={16} />
+                    <span>Mi Progreso</span>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md font-bold ${seccionActiva === "rendimiento" ? "bg-emerald-700 text-white" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
+                    Constante
+                  </span>
+                </button>
+
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 pt-5 pb-2">
+                  Asesoría Continua
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                    <Bot size={15} className="text-emerald-600" />
+                    <span>Asesor Académico en Vivo</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Acompañamiento en tiempo real durante tus ejercicios de modelado y costos.
+                  </p>
+                  <div className="text-[10px] font-mono text-emerald-700 flex items-center gap-1.5 pt-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Disponible en Aula
+                  </div>
+                </div>
+              </nav>
+            </div>
+
+            {/* Perfil del Estudiante & Salir */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center font-bold text-xs shrink-0">
+                    {usuarioActivo?.nombre ? usuarioActivo.nombre.substring(0, 2).toUpperCase() : "ES"}
+                  </div>
+                  <div className="overflow-hidden">
+                    <div className="text-xs font-bold text-slate-900 truncate max-w-[130px]">
+                      {usuarioActivo?.nombre || "Estudiante"}
+                    </div>
+                    <div className="text-[10px] text-slate-500 capitalize truncate">
+                      {usuarioActivo?.rol || "Alumno"} • INGEDUCA
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={onLogout}
+                  className="p-2 rounded-xl bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer shrink-0"
+                  title="Cerrar Sesión"
+                >
+                  <LogOut size={15} />
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* 2. SIDEBAR IZQUIERDO EJECUTIVO DEL ESTUDIANTE (md:flex / lg:w-72) */}
+      <aside className="hidden md:flex md:w-64 lg:w-72 md:min-w-[256px] bg-white border-r border-slate-200 text-slate-700 flex-col justify-between h-screen sticky top-0 z-40 select-none shadow-xs shrink-0">
         <div>
           {/* Logo y Branding */}
           <div className="p-6 border-b border-slate-100 flex items-center gap-3">
@@ -286,18 +464,34 @@ export default function DashboardEstudiante({
         </div>
       </aside>
 
-      {/* 2. ÁREA DE CONTENIDO PRINCIPAL */}
+      {/* 3. ÁREA DE CONTENIDO PRINCIPAL */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Top Header Bar */}
-        <header className="h-16 border-b border-slate-200 bg-white/95 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-          <div className="flex items-center gap-3">
-            <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
-              {seccionActiva === "clases" && "Portal del Estudiante • Clases en Vivo"}
-              {seccionActiva === "especialidades" && "Rutas de Especialización en Ingeniería BIM"}
-              {seccionActiva === "normativas" && "Normativas del Reglamento Nacional de Edificaciones"}
-              {seccionActiva === "rendimiento" && "Mi Registro de Asistencia y Progreso"}
+        {/* Top Header Bar con Botón Hamburguesa en Móvil */}
+        <header className="h-14 sm:h-16 border-b border-slate-200 bg-white/95 backdrop-blur-md px-3 sm:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Botón hamburguesa en móvil (< 768px / md:hidden) */}
+            <button
+              onClick={() => setSidebarMovilAbierto(true)}
+              className="md:hidden p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors cursor-pointer shrink-0"
+              aria-label="Abrir menú"
+            >
+              <Menu size={18} />
+            </button>
+
+            {/* Logo móvil compacto */}
+            <div className="md:hidden flex items-center gap-1.5 shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-xs shadow-sm">
+                IE
+              </div>
+            </div>
+
+            <h2 className="text-xs sm:text-base font-extrabold text-slate-900 tracking-tight truncate">
+              {seccionActiva === "clases" && "Clases en Vivo"}
+              {seccionActiva === "especialidades" && "Rutas de Especialización BIM"}
+              {seccionActiva === "normativas" && "Normativas RNE"}
+              {seccionActiva === "rendimiento" && "Mi Asistencia y Progreso"}
             </h2>
-            <span className="badge-pill bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="hidden sm:inline-flex badge-pill bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
               Conexión Estable
             </span>
