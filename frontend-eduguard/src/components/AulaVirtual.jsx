@@ -40,7 +40,9 @@ import {
   Award,
   Eye,
   HelpCircle,
-  MessageSquare
+  MessageSquare,
+  MoreHorizontal,
+  ChevronRight
 } from "lucide-react";
 import ChatAgent from "./ChatAgent.jsx";
 import ChatEnVivo from "./ChatEnVivo.jsx";
@@ -171,6 +173,8 @@ export default function AulaVirtual({
   const [opcionPreguntaSeleccionada, setOpcionPreguntaSeleccionada] = useState(null);
   const [tiempoDescansoVisual, setTiempoDescansoVisual] = useState(15);
   const [intervencionEnviadaA, setIntervencionEnviadaA] = useState(null);
+  const [pestanaMovil, setPestanaMovil] = useState("participantes"); // "participantes" | "chat"
+  const [mostrarMenuMasMovil, setMostrarMenuMasMovil] = useState(false);
 
   const enviarIntervencionRapida = async (est) => {
     const stId = est.id || est.nombre;
@@ -2037,11 +2041,11 @@ export default function AulaVirtual({
           {/* Nombre dinámico de la sesión en PostgreSQL y badge EN VIVO */}
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <h1 className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight truncate">
-              <span className="truncate max-w-[120px] xs:max-w-[150px] sm:max-w-md inline-block">
-                {clase?.nombre || clase?.titulo || "Sesión de Aprendizaje Sincrónico"}
+              <span className="truncate max-w-[140px] xs:max-w-[180px] sm:max-w-md inline-block">
+                {clase?.nombre || clase?.titulo || "Modelado BIM"}
               </span>
             </h1>
-            <span className="badge-pill bg-rose-50 text-rose-700 border border-rose-200 text-[9px] sm:text-[10px] font-bold shrink-0">
+            <span className="hidden md:inline-flex badge-pill bg-rose-50 text-rose-700 border border-rose-200 text-[9px] sm:text-[10px] font-bold shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
               <span className="hidden sm:inline">● EN VIVO </span>DENTRO DEL AULA
             </span>
@@ -2049,10 +2053,10 @@ export default function AulaVirtual({
         </div>
 
         {/* Estado, Modos de Visualización y Selector de Tema */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           
           {/* Selector de Tema de Fondo */}
-          <div className="relative">
+          <div className="relative hidden md:block">
             <button
               onClick={() => setMostrarTemas(!mostrarTemas)}
               className="p-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
@@ -2139,10 +2143,12 @@ export default function AulaVirtual({
             <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0 lg:overflow-hidden">
               
               {/* Pantalla Compartida Principal (Visualizador BIM Interactivo o Screen Share) */}
-              <div className="flex-1 rounded-2xl bg-white border border-slate-200 overflow-hidden flex flex-col shadow-sm relative">
+              <div className={`rounded-2xl bg-white border border-slate-200 overflow-hidden flex flex-col shadow-sm relative ${
+                pantallaCompartida ? "w-full aspect-video md:aspect-auto flex-1" : "hidden lg:flex flex-1"
+              }`}>
                 
-                {/* Header del Escenario de Software / Pantalla Compartida */}
-                <div className="h-12 bg-white border-b border-slate-200 px-4 flex items-center justify-between shrink-0 gap-3">
+                {/* Header del Escenario de Software / Pantalla Compartida (Oculto en móvil) */}
+                <div className="hidden md:flex h-12 bg-white border-b border-slate-200 px-4 items-center justify-between shrink-0 gap-3">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <Monitor size={16} className={presentadorActual.esTuPantalla ? "text-emerald-600" : "text-indigo-600"} />
                     
@@ -2476,7 +2482,7 @@ export default function AulaVirtual({
                       iniciarCamara();
                     }
                   }}
-                  className={`min-h-[240px] h-60 rounded-2xl bg-slate-900 border-2 border-emerald-500/70 relative overflow-hidden shadow-sm flex flex-col justify-between p-3.5 group ${
+                  className={`w-full aspect-video md:aspect-auto md:min-h-[240px] md:h-60 rounded-2xl bg-slate-900 border-2 border-emerald-500/70 relative overflow-hidden shadow-sm flex flex-col justify-between p-3.5 group ${
                     rol === "docente" && !streamLocal ? "cursor-pointer hover:border-emerald-400" : ""
                   }`}
                 >
@@ -2551,16 +2557,23 @@ export default function AulaVirtual({
                     </div>
                   )}
 
-                  {/* Badge superior sobre el video del docente (sin badge redundante de DOCENTE TITULAR) */}
-                  <div className="relative z-10 flex justify-end items-center text-[10px] font-mono">
+                  {/* Etiqueta discreta en móvil: Nombre • En vivo */}
+                  <div className="md:hidden absolute bottom-2.5 left-2.5 z-20 bg-slate-900/80 backdrop-blur-md text-white px-2.5 py-1 rounded-xl border border-white/15 flex items-center gap-1.5 text-[11px] font-medium shadow-md">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="font-bold truncate max-w-[170px]">{nombreDocente}</span>
+                    <span className="text-slate-300 text-[10px]">• En vivo</span>
+                  </div>
+
+                  {/* Badge superior sobre el video del docente (solo desktop) */}
+                  <div className="hidden md:flex relative z-10 justify-end items-center text-[10px] font-mono">
                     <span className="bg-white/95 backdrop-blur-md text-emerald-800 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1.5 shadow-xs font-bold">
                       <Volume2 size={12} className="text-emerald-600 animate-bounce" />
                       Audio Activo
                     </span>
                   </div>
 
-                  {/* Badge inferior con nombre del docente y ondas de voz */}
-                  <div className="relative z-10 flex justify-between items-center bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 text-xs shadow-xs">
+                  {/* Badge inferior con nombre del docente y ondas de voz (solo desktop) */}
+                  <div className="hidden md:flex relative z-10 justify-between items-center bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 text-xs shadow-xs">
                     <div className="flex items-center gap-2 truncate">
                       <span className="font-bold text-slate-900 truncate">{nombreDocente}</span>
                     </div>
@@ -2725,13 +2738,13 @@ export default function AulaVirtual({
 
                   {/* Header sobre video del estudiante con estado detallado */}
                   <div className="relative z-10 flex justify-between items-center text-[10px]">
-                    <span className="bg-white/95 backdrop-blur-md text-indigo-700 px-2 py-0.5 rounded-lg border border-indigo-200 font-bold shadow-xs">
+                    <span className="hidden md:inline-block bg-white/95 backdrop-blur-md text-indigo-700 px-2 py-0.5 rounded-lg border border-indigo-200 font-bold shadow-xs">
                       {rol === "docente" ? "ALUMNO EN VIVO (MUESTRA)" : "TU CÁMARA (ESTUDIANTE)"}
                     </span>
                     {(() => {
                       const st = obtenerDatosEstado(rol === "docente" ? (alumnoMuestra?.emocion || "Atento") : emocionActual);
                       return (
-                        <span className={`badge-pill text-[10px] font-bold border ${st.badge}`}>
+                        <span className={`badge-pill text-[10px] font-bold border ml-auto md:ml-0 ${st.badge}`}>
                           {st.emoji} {st.nombre} • {rol === "docente" ? (alumnoMuestra?.atencion || 95) : scoreAtencion}%
                         </span>
                       );
@@ -2740,7 +2753,7 @@ export default function AulaVirtual({
 
                   {/* Footer sobre video del estudiante con estado de biometría y selector interactivo */}
                   <div className="relative z-10 flex flex-col gap-1.5 mt-auto pt-2">
-                    <div className="flex justify-between items-center bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs shadow-xs">
+                    <div className="hidden md:flex justify-between items-center bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs shadow-xs">
                       <span className="font-bold text-slate-900 truncate max-w-[140px]">
                         {rol === "docente" ? (alumnoMuestra?.nombre || "Esperando estudiantes...") : `${nombreEstudianteActivo} (Tú)`}
                       </span>
@@ -2758,7 +2771,7 @@ export default function AulaVirtual({
                     {/* SELECTOR INTERACTIVO DE ESTADO SOLO EN EL PANEL DEL ESTUDIANTE */}
                     {rol === "estudiante" && (
                       <div className="bg-white/95 backdrop-blur-md px-2 py-1.5 rounded-xl border border-slate-200 shadow-xs">
-                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center justify-between">
+                        <div className="hidden md:flex text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1 items-center justify-between">
                           <span className="flex items-center gap-1 text-slate-700">
                             <Sparkles size={10} className="text-emerald-600" />
                             <span>Tu Estado en Vivo:</span>
@@ -2804,8 +2817,114 @@ export default function AulaVirtual({
                   </div>
                 </div>
 
-                {/* 3. RESUMEN RÁPIDO DE PARTICIPANTES / ALUMNOS CONECTADOS */}
-                <div className="w-full rounded-2xl bg-white border border-slate-200 p-3.5 flex flex-col justify-between space-y-2 shadow-xs">
+                {/* 3. NAVEGACIÓN LIMPIA POR PESTAÑAS EN MÓVIL (< md) */}
+                <div className="md:hidden flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-2xs w-full">
+                  <button
+                    onClick={() => setPestanaMovil("participantes")}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      pestanaMovil === "participantes"
+                        ? "bg-white text-emerald-800 shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Users size={14} className={pestanaMovil === "participantes" ? "text-emerald-600" : "text-slate-500"} />
+                    <span>Participantes ({listaEstudiantesActivos.length + 1})</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setPestanaMovil("chat");
+                      setMensajesNoLeidos(0);
+                    }}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer relative ${
+                      pestanaMovil === "chat"
+                        ? "bg-white text-emerald-800 shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <MessageSquare size={14} className={pestanaMovil === "chat" ? "text-emerald-600" : "text-slate-500"} />
+                    <span>Chat en Vivo</span>
+                    {mensajesNoLeidos > 0 && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
+                    )}
+                  </button>
+                </div>
+
+                {/* CONTENIDO DE PESTAÑAS EN MÓVIL (< md) */}
+                <div className="md:hidden w-full">
+                  {pestanaMovil === "participantes" && (
+                    <div className="w-full rounded-2xl bg-white border border-slate-200 p-3.5 space-y-2 shadow-xs">
+                      <div className="flex justify-between items-center text-xs font-bold text-slate-800 pb-1 border-b border-slate-100">
+                        <span className="flex items-center gap-1.5 text-slate-900">
+                          <Users size={14} className="text-emerald-600" />
+                          <span>Compañeros en Sala ({listaEstudiantesActivos.length})</span>
+                        </span>
+                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          En vivo
+                        </span>
+                      </div>
+
+                      {listaEstudiantesActivos.length === 0 ? (
+                        <div className="py-4 text-center text-slate-400 text-xs font-medium">
+                          Sin otros alumnos conectados aún
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5 max-h-60 overflow-y-auto pr-0.5">
+                          {listaEstudiantesActivos.map((est, i) => {
+                            const st = obtenerDatosEstado(est.emocion);
+                            const estKey = est.id || est.nombre;
+                            return (
+                              <div
+                                key={estKey || i}
+                                className="p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs hover:border-slate-300 transition-all shadow-2xs gap-2"
+                              >
+                                <div className="flex items-center gap-2 truncate min-w-0">
+                                  <span className={`w-2 h-2 rounded-full ${st.dot} shrink-0`} />
+                                  <div className="truncate">
+                                    <span className="font-bold text-slate-800 block text-xs truncate">{(est.nombre || "Estudiante")}</span>
+                                    <span className="text-[10px] text-slate-500 font-mono">{est.atencion}% atención</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span className={`px-1.5 py-0.5 rounded-md font-bold text-[9px] border ${st.badge}`}>
+                                    {st.emoji} {st.nombre}
+                                  </span>
+                                  {rol === "docente" && (
+                                    <button
+                                      onClick={() => enviarIntervencionRapida(est)}
+                                      className="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] flex items-center gap-1 transition-all shadow-xs cursor-pointer active:scale-95"
+                                      title={`Enviar intervención a ${est.nombre || "Estudiante"}`}
+                                    >
+                                      <Sparkles size={11} />
+                                      <span>{intervencionEnviadaA === estKey ? "¡Enviado!" : "Intervenir"}</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {pestanaMovil === "chat" && (
+                    <div className="w-full h-96 rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-xs">
+                      <ChatEnVivo
+                        aulaId={aulaId}
+                        usuario={usuario}
+                        rol={rol}
+                        wsRef={wsRef}
+                        mensajes={mensajesChat}
+                        onEnviarMensaje={handleEnviarMensajeChat}
+                        temaClase={clase?.nombre || "Modelado BIM & Revit"}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. RESUMEN RÁPIDO DE PARTICIPANTES EN ESCRITORIO (md:flex) */}
+                <div className="hidden md:flex w-full rounded-2xl bg-white border border-slate-200 p-3.5 flex-col justify-between space-y-2 shadow-xs">
                   <div className="flex justify-between items-center text-xs font-bold text-slate-800">
                     <span className="flex items-center gap-1.5 text-slate-900">
                       <Users size={14} className="text-emerald-600" />
@@ -3106,10 +3225,180 @@ export default function AulaVirtual({
           )}
 
           {/* 3. BARRA FLOTANTE DE CONTROL ESTILO DOCK MODERNO (BOTTOM BAR) */}
-          <div className="h-16 bg-white/95 backdrop-blur-2xl border border-slate-200/90 rounded-2xl px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-xl relative z-40">
+          <div className="h-16 bg-white/95 backdrop-blur-2xl border border-slate-200/90 rounded-2xl px-2 sm:px-6 flex items-center justify-between shrink-0 shadow-xl relative z-40">
+            
+            {/* CONTROLES MÓVILES ESENCIALES (md:hidden) - MÁXIMO 5-6 BOTONES BIEN ESPACIADOS */}
+            <div className="md:hidden flex items-center justify-around w-full gap-1">
+              {/* 1. Micrófono */}
+              <button
+                onClick={() => setMicActivo(!micActivo)}
+                className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                  micActivo
+                    ? "bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200"
+                    : "bg-rose-600 text-white shadow-rose-600/30"
+                }`}
+                title={micActivo ? "Silenciar micrófono" : "Activar micrófono"}
+              >
+                {micActivo ? <Mic size={18} /> : <MicOff size={18} />}
+              </button>
+
+              {/* 2. Cámara */}
+              <button
+                onClick={handleToggleCamara}
+                className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                  camaraActiva
+                    ? "bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200"
+                    : "bg-rose-600 text-white shadow-rose-600/30"
+                }`}
+                title={camaraActiva ? "Apagar cámara" : "Encender cámara"}
+              >
+                {camaraActiva ? <Video size={18} /> : <VideoOff size={18} />}
+              </button>
+
+              {/* 3. Compartir Pantalla / Levantar la Mano */}
+              {rol === "docente" ? (
+                <button
+                  onClick={handleToggleScreenShare}
+                  className={`relative w-11 h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                    streamPantallaRef.current || (pantallaCompartida && presentadorActual.esTuPantalla && presentadorActual.tipo === "real")
+                      ? "bg-rose-600 text-white shadow-rose-600/30 border border-rose-500"
+                      : "bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200"
+                  }`}
+                  title="Compartir pantalla"
+                >
+                  <Monitor size={18} />
+                  {(streamPantallaRef.current || (pantallaCompartida && presentadorActual.esTuPantalla && presentadorActual.tipo === "real")) && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 border-2 border-white animate-pulse" />
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleLevantarMano}
+                  className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                    manoLevantada
+                      ? "bg-amber-500 text-white shadow-amber-500/30 animate-pulse"
+                      : "bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200"
+                  }`}
+                  title={manoLevantada ? "Bajar mano" : "Levantar la mano"}
+                >
+                  <Hand size={18} />
+                </button>
+              )}
+
+              {/* 4. Chat con contador */}
+              <button
+                onClick={() => {
+                  setPestanaMovil("chat");
+                  setMensajesNoLeidos(0);
+                }}
+                className={`relative w-11 h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                  pestanaMovil === "chat"
+                    ? "bg-emerald-600 text-white shadow-emerald-600/30"
+                    : "bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200"
+                }`}
+                title="Abrir Chat en Vivo"
+              >
+                <MessageSquare size={18} />
+                {mensajesNoLeidos > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-mono text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black animate-pulse shadow-xs">
+                    {mensajesNoLeidos}
+                  </span>
+                )}
+              </button>
+
+              {/* Botón ••• Más (reacciones, ajustes de cámara, ficha IA) */}
+              <div className="relative">
+                <button
+                  onClick={() => setMostrarMenuMasMovil(!mostrarMenuMasMovil)}
+                  className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                    mostrarMenuMasMovil
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200"
+                  }`}
+                  title="Más opciones"
+                >
+                  <MoreHorizontal size={18} />
+                </button>
+
+                {mostrarMenuMasMovil && (
+                  <div className="absolute bottom-14 right-0 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl p-3 shadow-2xl z-50 w-64 space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-1.5">
+                      <span className="text-[11px] font-bold text-slate-800 uppercase tracking-wider">Opciones Adicionales</span>
+                      <button
+                        onClick={() => setMostrarMenuMasMovil(false)}
+                        className="text-slate-400 hover:text-slate-700 cursor-pointer p-0.5"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+
+                    {/* Reacciones */}
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-slate-500">Enviar Reacción:</span>
+                      <div className="flex items-center justify-between bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                        {["👏", "👍", "💡", "❤️", "🚀"].map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => {
+                              lanzarReaccion(emoji);
+                              setMostrarMenuMasMovil(false);
+                            }}
+                            className="text-xl p-1 hover:scale-125 transition-transform cursor-pointer"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Ajustes de cámara */}
+                    <button
+                      onClick={() => {
+                        setMostrarConfigCam(true);
+                        setMostrarMenuMasMovil(false);
+                      }}
+                      className="w-full py-2 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-between border border-slate-200 cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Settings size={14} className="text-slate-500" />
+                        <span>Ajustes de Cámara</span>
+                      </span>
+                      <ChevronRight size={13} className="text-slate-400" />
+                    </button>
+
+                    {/* Ficha Técnica IA */}
+                    <button
+                      onClick={() => {
+                        setModalFichaTesis(true);
+                        setMostrarMenuMasMovil(false);
+                      }}
+                      className="w-full py-2 px-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-between border border-indigo-200 cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Award size={14} className="text-indigo-600" />
+                        <span>Ficha Técnica IA (Tesis)</span>
+                      </span>
+                      <ChevronRight size={13} className="text-indigo-400" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 5. Botón Rojo: Colgar / Salir */}
+              <button
+                onClick={handleAbandonarSala}
+                className="w-11 h-11 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center shadow-md shadow-rose-600/20 transition-all cursor-pointer active:scale-95"
+                title="Salir del aula"
+              >
+                <PhoneOff size={18} />
+              </button>
+            </div>
+
+            {/* CONTROLES EN ESCRITORIO (hidden md:flex) - COMPLETO Y ESPACIOSO */}
+            <div className="hidden md:flex items-center justify-between w-full">
             
             {/* Lado izquierdo: Info de Participante y Nivel de Micrófono */}
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-xs text-slate-800 font-mono">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="font-bold">{usuario?.nombre || "Participante"}</span>
@@ -3371,6 +3660,8 @@ export default function AulaVirtual({
                 <Users size={16} />
                 <span className="hidden xl:inline">{listaEstudiantesActivos.length + 1}</span>
               </button>
+            </div>
+
             </div>
 
           </div>
@@ -3964,26 +4255,6 @@ export default function AulaVirtual({
             </div>
           </div>
         </div>
-      )}
-
-      {/* Botón Flotante de Chat en Móvil (< md) */}
-      {!panelLateral && (
-        <button
-          onClick={() => {
-            setPanelLateral("chat-vivo");
-            setMensajesNoLeidos(0);
-          }}
-          className="md:hidden fixed bottom-20 right-4 z-40 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 font-bold text-xs border border-white/20 active:scale-95 transition-all cursor-pointer"
-          title="Abrir chat en vivo"
-        >
-          <MessageSquare size={18} />
-          <span>Chat</span>
-          {mensajesNoLeidos > 0 && (
-            <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center animate-bounce shadow">
-              {mensajesNoLeidos}
-            </span>
-          )}
-        </button>
       )}
 
       {/* Modal Ficha Técnica y Matriz de Confusión para Sustentación de Tesis */}

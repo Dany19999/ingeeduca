@@ -179,7 +179,7 @@ export default function ChatEnVivo({
         ];
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 border-l border-slate-200 select-none overflow-hidden">
+    <div className="flex flex-col h-full bg-slate-50 md:border-l border-slate-200 select-none overflow-hidden">
       {/* Header del Chat */}
       <div className="p-3.5 bg-white border-b border-slate-200 flex items-center justify-between shrink-0 shadow-2xs">
         <div className="flex items-center gap-2.5">
