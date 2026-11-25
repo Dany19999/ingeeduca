@@ -59,7 +59,8 @@ cargar_env_local()
 DEFAULT_POSTGRES_URL = "postgresql://postgres:dany2005@localhost:5432/eduguard_tesis_db"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_POSTGRES_URL)
 
-# Asegurar compatibilidad de driver si viene sin prefijo o con postgres:// (Render) o con sqlite
+# Asegurar compatibilidad de driver si viene con postgres:// (Render) o con sqlite
+# Soporta tanto psycopg (v3) como psycopg2
 if DATABASE_URL:
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
