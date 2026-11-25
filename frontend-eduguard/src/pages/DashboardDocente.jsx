@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from "react";
 import { API_URL, getWsAulaUrl, getWsAlertasUrl } from "../config/api.js";
 import {
   Users,
@@ -41,7 +41,7 @@ import {
   MessageSquare,
   Menu
 } from "lucide-react";
-import AulaVirtual from "../components/AulaVirtual.jsx";
+const AulaVirtual = lazy(() => import("../components/AulaVirtual.jsx"));
 import ChatEnVivo from "../components/ChatEnVivo.jsx";
 import ChatAgent from "../components/ChatAgent.jsx";
 import FichaTecnicaModal from "../components/FichaTecnicaModal.jsx";
@@ -193,6 +193,7 @@ export default function DashboardDocente({
   useEffect(() => {
     cargarAlertasIniciales();
     let activo = true;
+    let pingIntervalAlertasDocente = null;
 
     const iniciarWsAlertas = () => {
       try {
@@ -202,11 +203,17 @@ export default function DashboardDocente({
 
         ws.onopen = () => {
           console.log("[Alertas WS] Conexión establecida con la sala AULA-101:", wsUrl);
+          pingIntervalAlertasDocente = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              try { ws.send(JSON.stringify({ tipo: "ping" })); } catch {}
+            }
+          }, 25000);
         };
 
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
+            if (data.tipo === "pong") return;
             if (data.tipo === "estado_inicial") {
               if (data.estado?.mensajes && Array.isArray(data.estado.mensajes)) {
                 setMensajesChatDocente((prev) => {
@@ -264,6 +271,7 @@ export default function DashboardDocente({
         };
 
         ws.onclose = () => {
+          if (pingIntervalAlertasDocente) clearInterval(pingIntervalAlertasDocente);
           if (activo) {
             reconnectWsRef.current = setTimeout(iniciarWsAlertas, 3000);
           }
@@ -284,6 +292,7 @@ export default function DashboardDocente({
 
     return () => {
       activo = false;
+      if (pingIntervalAlertasDocente) clearInterval(pingIntervalAlertasDocente);
       if (reconnectWsRef.current) clearTimeout(reconnectWsRef.current);
       if (wsAlertasRef.current) {
         wsAlertasRef.current.close();
@@ -457,6 +466,7 @@ export default function DashboardDocente({
   useEffect(() => {
     let ws = null;
     let activo = true;
+    let pingIntervalAulaDocente = null;
 
     const conectarWsAula = () => {
       try {
@@ -466,6 +476,12 @@ export default function DashboardDocente({
 
         ws.onopen = () => {
           console.log("[Aula Docente WS] Conectado a /ws/aula/AULA-101");
+          pingIntervalAulaDocente = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              try { ws.send(JSON.stringify({ tipo: "ping" })); } catch {}
+            }
+          }, 25000);
+
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({
               tipo: "join",
@@ -483,6 +499,7 @@ export default function DashboardDocente({
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
+            if (data.tipo === "pong") return;
             if (data.tipo === "estado_inicial") {
               if (data.estado?.mensajes && Array.isArray(data.estado.mensajes)) {
                 setMensajesChatDocente((prev) => {
@@ -521,6 +538,7 @@ export default function DashboardDocente({
         };
 
         ws.onclose = () => {
+          if (pingIntervalAulaDocente) clearInterval(pingIntervalAulaDocente);
           if (activo) setTimeout(conectarWsAula, 3500);
         };
       } catch (err) {
@@ -532,6 +550,7 @@ export default function DashboardDocente({
 
     return () => {
       activo = false;
+      if (pingIntervalAulaDocente) clearInterval(pingIntervalAulaDocente);
       if (wsAulaDocenteRef.current) wsAulaDocenteRef.current.close();
       if (frameDocenteIntervalRef.current) clearInterval(frameDocenteIntervalRef.current);
       if (streamDocenteRef.current) {
@@ -1014,17 +1033,19 @@ export default function DashboardDocente({
     return coincideFiltro && coincideBusqueda;
   });
 
-  // Si el docente ingresa a una clase en vivo, desplegamos el Aula Virtual Sincrónica Nativa
+  // Si el docente ingresa a una clase en vivo, desplegamos el Aula Virtual Sincrónica Nativa (Lazy)
   if (claseEnVivoActiva) {
     return (
-      <AulaVirtual
-        rol="docente"
-        clase={claseEnVivoActiva}
-        usuario={usuarioActivo}
-        onSalir={() => setClaseEnVivoActiva(null)}
-        estudiantesConectados={estudiantesConectados}
-        onEmitirMetrica={onEmitirMetrica}
-      />
+      <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-slate-950 text-white font-bold text-sm">Cargando Aula Virtual Sincrónica...</div>}>
+        <AulaVirtual
+          rol="docente"
+          clase={claseEnVivoActiva}
+          usuario={usuarioActivo}
+          onSalir={() => setClaseEnVivoActiva(null)}
+          estudiantesConectados={estudiantesConectados}
+          onEmitirMetrica={onEmitirMetrica}
+        />
+      </Suspense>
     );
   }
 

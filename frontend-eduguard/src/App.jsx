@@ -1,9 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import Login from "./Login.jsx";
-import DashboardDocente from "./pages/DashboardDocente.jsx";
-import DashboardEstudiante from "./pages/DashboardEstudiante.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { API_URL } from "./config/api.js";
+
+// Code Splitting con React.lazy para carga bajo demanda de módulos pesados
+const DashboardDocente = lazy(() => import("./pages/DashboardDocente.jsx"));
+const DashboardEstudiante = lazy(() => import("./pages/DashboardEstudiante.jsx"));
+
+function LoadingView() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white select-none">
+      <div className="relative mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-pulse font-black text-2xl">
+          IE
+        </div>
+        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-slate-950 animate-ping" />
+      </div>
+      <h3 className="text-base font-bold text-slate-100 tracking-tight">INGEEDUCA Campus</h3>
+      <p className="text-xs text-slate-400 font-mono mt-1 animate-pulse">Cargando entorno académico...</p>
+    </div>
+  );
+}
 
 export default function App() {
   const [usuarioActivo, setUsuarioActivo] = useState(() => {
@@ -201,15 +218,17 @@ export default function App() {
   if (usuarioActivo.rol === "docente") {
     return (
       <ErrorBoundary>
-        <DashboardDocente
-          usuarioActivo={usuarioActivo}
-          onLogout={handleLogout}
-          clasesActivas={clasesActivas}
-          onCrearClase={handleCrearClase}
-          estudiantesConectados={estudiantesConectados}
-          onIntervenirEstudiante={handleIntervenirEstudiante}
-          onEmitirMetrica={handleEmitirMetrica}
-        />
+        <Suspense fallback={<LoadingView />}>
+          <DashboardDocente
+            usuarioActivo={usuarioActivo}
+            onLogout={handleLogout}
+            clasesActivas={clasesActivas}
+            onCrearClase={handleCrearClase}
+            estudiantesConectados={estudiantesConectados}
+            onIntervenirEstudiante={handleIntervenirEstudiante}
+            onEmitirMetrica={handleEmitirMetrica}
+          />
+        </Suspense>
       </ErrorBoundary>
     );
   }
@@ -217,14 +236,16 @@ export default function App() {
   // Vista de Estudiante
   return (
     <ErrorBoundary>
-      <DashboardEstudiante
-        usuarioActivo={usuarioActivo}
-        onLogout={handleLogout}
-        clasesActivas={clasesActivas}
-        onUnirseClase={handleUnirseClase}
-        estudiantesConectados={estudiantesConectados}
-        onEmitirMetrica={handleEmitirMetrica}
-      />
+      <Suspense fallback={<LoadingView />}>
+        <DashboardEstudiante
+          usuarioActivo={usuarioActivo}
+          onLogout={handleLogout}
+          clasesActivas={clasesActivas}
+          onUnirseClase={handleUnirseClase}
+          estudiantesConectados={estudiantesConectados}
+          onEmitirMetrica={handleEmitirMetrica}
+        />
+      </Suspense>
     </ErrorBoundary>
   );
 }

@@ -220,6 +220,7 @@ export default function AulaVirtual({
   const videoHiddenIaRef = useRef(null);
   const isPredictingRef = useRef(false);
   const ultimoEnvioMetricaRef = useRef(0);
+  const ultimoEnvioWsTelemetriaRef = useRef(0);
   const ultimoIncidenteEmitidoRef = useRef(0);
 
   // Estado del flujo de cámara real
@@ -471,8 +472,8 @@ export default function AulaVirtual({
     if (navigator?.mediaDevices?.getUserMedia) {
       try {
         const videoOptions = deviceId
-          ? { deviceId: { exact: deviceId } }
-          : { width: { ideal: 1280, min: 640 }, height: { ideal: 720, min: 480 } };
+          ? { deviceId: { exact: deviceId }, width: { ideal: 480, max: 640 }, height: { ideal: 360, max: 480 }, frameRate: { ideal: 24, max: 30 } }
+          : { width: { ideal: 480, max: 640 }, height: { ideal: 360, max: 480 }, frameRate: { ideal: 24, max: 30 } };
 
         stream = await navigator.mediaDevices.getUserMedia({
           video: videoOptions,
@@ -592,6 +593,11 @@ export default function AulaVirtual({
       if (audioContextRef.current && audioContextRef.current.state !== "closed") {
         audioContextRef.current.close().catch(() => {});
       }
+      try {
+        if (window.tf && typeof window.tf.disposeVariables === "function") {
+          window.tf.disposeVariables();
+        }
+      } catch {}
     };
   }, [iniciarCamara]);
 
@@ -729,6 +735,7 @@ export default function AulaVirtual({
       const wsUrl = getWsAulaUrl(aulaId);
       ws = new WebSocket(wsUrl);
       wsRef.current = ws;
+      let pingIntervalAula = null;
 
       ws.onopen = () => {
         if (!desmontado && ws.readyState === WebSocket.OPEN) {
@@ -737,12 +744,18 @@ export default function AulaVirtual({
             user: datosUsuario
           }));
         }
+        pingIntervalAula = setInterval(() => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            try { ws.send(JSON.stringify({ tipo: "ping" })); } catch {}
+          }
+        }, 25000);
       };
 
       ws.onmessage = (event) => {
         if (desmontado) return;
         try {
           const mensaje = JSON.parse(event.data);
+          if (mensaje.tipo === "pong") return;
           if (mensaje.tipo === "estado_inicial") {
             if (mensaje.estado?.participantes) {
               setParticipantesEnSala(mensaje.estado.participantes);
@@ -859,6 +872,10 @@ export default function AulaVirtual({
         }
       };
 
+      ws.onclose = () => {
+        if (pingIntervalAula) clearInterval(pingIntervalAula);
+      };
+
       ws.onerror = (e) => {
         console.warn("[WS Error]:", e);
       };
@@ -868,6 +885,7 @@ export default function AulaVirtual({
 
     return () => {
       desmontado = true;
+      if (pingIntervalAula) clearInterval(pingIntervalAula);
       if (fallbackTimer) clearInterval(fallbackTimer);
       if (frameIntervalRef.current) {
         clearInterval(frameIntervalRef.current);
@@ -1251,16 +1269,27 @@ export default function AulaVirtual({
     let activo = true;
     let reconnectT = null;
 
+    let pingIntervalAlertas = null;
+
     const conectarAlertasEstudiante = () => {
       try {
         const wsUrl = getWsAlertasUrl(aulaId || "AULA-101");
         const wsA = new WebSocket(wsUrl);
         wsAlertasEstudianteRef.current = wsA;
 
+        wsA.onopen = () => {
+          pingIntervalAlertas = setInterval(() => {
+            if (wsA && wsA.readyState === WebSocket.OPEN) {
+              try { wsA.send(JSON.stringify({ tipo: "ping" })); } catch {}
+            }
+          }, 25000);
+        };
+
         wsA.onmessage = (event) => {
           if (!activo) return;
           try {
             const data = JSON.parse(event.data);
+            if (data.tipo === "pong") return;
             if (
               data.tipo === "INTERVENCION_DOCENTE" ||
               (data.tipo === "alerta_incidente" && data.alerta?.tipo === "INTERVENCION_DOCENTE")
@@ -1281,6 +1310,7 @@ export default function AulaVirtual({
         };
 
         wsA.onclose = () => {
+          if (pingIntervalAlertas) clearInterval(pingIntervalAlertas);
           if (activo) {
             reconnectT = setTimeout(conectarAlertasEstudiante, 3500);
           }
@@ -1300,6 +1330,7 @@ export default function AulaVirtual({
 
     return () => {
       activo = false;
+      if (pingIntervalAlertas) clearInterval(pingIntervalAlertas);
       if (reconnectT) clearTimeout(reconnectT);
       if (wsAlertasEstudianteRef.current) {
         wsAlertasEstudianteRef.current.close();
@@ -1523,20 +1554,24 @@ export default function AulaVirtual({
           setEmocionActual(claseNormalizada);
           setScoreAtencion(nuevoScore);
 
-          // Emitir telemetría por WebSocket a los participantes del aula
-          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            wsRef.current.send(JSON.stringify({
-              tipo: "telemetria",
-              user: {
-                id: usuario?.id,
-                nombre: usuario?.nombre,
-                correo: usuario?.email || usuario?.correo,
-                rol,
-                emocion: claseNormalizada,
-                atencion: nuevoScore,
-                softwareActivo: clase?.software || "Autodesk Revit 2026"
-              }
-            }));
+          // Emitir telemetría por WebSocket a los participantes del aula (máximo 1 vez cada 2 segundos)
+          const ahoraWs = Date.now();
+          if (ahoraWs - ultimoEnvioWsTelemetriaRef.current >= 2000) {
+            ultimoEnvioWsTelemetriaRef.current = ahoraWs;
+            if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({
+                tipo: "telemetria",
+                user: {
+                  id: usuario?.id,
+                  nombre: usuario?.nombre,
+                  correo: usuario?.email || usuario?.correo,
+                  rol,
+                  emocion: claseNormalizada,
+                  atencion: nuevoScore,
+                  softwareActivo: clase?.software || "Autodesk Revit 2026"
+                }
+              }));
+            }
           }
 
           // Notificar vía onEmitirMetrica
@@ -1562,7 +1597,7 @@ export default function AulaVirtual({
       } finally {
         isPredictingRef.current = false;
       }
-    }, 750); // Intervalo controlado de 750 ms (dentro del rango 600ms - 1000ms)
+    }, 350); // Intervalo optimizado a 350 ms (~2.8 FPS) para evitar calentamiento de CPU y lag móvil
 
     return () => {
       cancelado = true;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import {
   Compass,
   FileText,
@@ -16,7 +16,7 @@ import {
   Menu,
   X
 } from "lucide-react";
-import AulaVirtual from "../components/AulaVirtual.jsx";
+const AulaVirtual = lazy(() => import("../components/AulaVirtual.jsx"));
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
 
 export default function DashboardEstudiante({
@@ -91,14 +91,16 @@ export default function DashboardEstudiante({
   if (claseSeleccionada) {
     return (
       <ErrorBoundary>
-        <AulaVirtual
-          rol="estudiante"
-          clase={claseSeleccionada}
-          usuario={usuarioActivo}
-          onSalir={handleSalirDeClase}
-          estudiantesConectados={estudiantesConectados}
-          onEmitirMetrica={onEmitirMetrica}
-        />
+        <Suspense fallback={<div className="h-screen w-full flex items-center justify-center bg-slate-950 text-white font-bold text-sm">Cargando Aula Virtual...</div>}>
+          <AulaVirtual
+            rol="estudiante"
+            clase={claseSeleccionada}
+            usuario={usuarioActivo}
+            onSalir={handleSalirDeClase}
+            estudiantesConectados={estudiantesConectados}
+            onEmitirMetrica={onEmitirMetrica}
+          />
+        </Suspense>
       </ErrorBoundary>
     );
   }

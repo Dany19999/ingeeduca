@@ -6,6 +6,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Depends, status, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime, timezone
@@ -52,6 +53,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Compresión GZip para reducir tamaño de payloads JSON y optimizar ancho de banda móvil
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+@app.get("/health")
+def health_check():
+    """Endpoint de monitoreo ligero para keep-alive y verificación de disponibilidad en Render."""
+    return {
+        "status": "healthy",
+        "service": "INGEEDUCA Campus API",
+        "timestamp": ahora_utc().isoformat()
+    }
 
 # Carga de variables de entorno desde archivo .env local si existe
 def _cargar_env_local():
@@ -892,7 +905,14 @@ async def websocket_aula(websocket: WebSocket, aula_id: str):
                     "participantes": estado["participantes"]
                 })
                 
-            elif tipo == "ping" or tipo == "telemetria":
+            elif tipo == "ping":
+                # Heartbeat keep-alive para evitar desconexiones por inactividad en Render
+                user_info = datos.get("user")
+                if user_info:
+                    sala_manager.registrar_presencia(aula_id, user_info)
+                await websocket.send_json({"tipo": "pong", "timestamp": time.time()})
+                
+            elif tipo == "telemetria":
                 user_info = datos.get("user", {})
                 if user_info:
                     sala_manager.registrar_presencia(aula_id, user_info)
@@ -1145,7 +1165,10 @@ async def websocket_alertas(websocket: WebSocket, room_id: str):
                 continue
             
             tipo_msg = datos.get("tipo")
-            if tipo_msg == "INTERVENCION_DOCENTE":
+            if tipo_msg == "ping":
+                await websocket.send_json({"tipo": "pong", "timestamp": time.time()})
+                continue
+            elif tipo_msg == "INTERVENCION_DOCENTE":
                 await alerta_manager.broadcast(rid, datos)
                 await sala_manager.broadcast(rid, datos)
             elif tipo_msg == "INTERVENCION_COMPLETADA":
